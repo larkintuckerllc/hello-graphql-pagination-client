@@ -24,11 +24,6 @@ interface ITodosProps {
   setTotalCount(totalCount: number): void;
 }
 
-const DEFAULT_TODOS_RESULT = {
-  todos: [],
-  totalCount: 0,
-};
-
 const GET_TODOS = gql`
   query TodosPage($first: Int, $offset: Int) {
     allTodos(first: $first, offset: $offset) {
@@ -51,22 +46,17 @@ const Todos = ({ first, offset, setTotalCount }: ITodosProps) => (
       offset,
     }}
   >
-    {({ data = {
-      allTodos: DEFAULT_TODOS_RESULT,
-     }, error, loading }) => {
-      if (data.allTodos === undefined) {
-        data.allTodos = DEFAULT_TODOS_RESULT;
-      }
+    {({ data: { allTodos: { todos = [], totalCount = 0 } = {} } = {}, error, loading }) => {
       return (
         <div>
           <TodosCount
             setTotalCount={setTotalCount}
-            totalCount={data.allTodos.totalCount}
+            totalCount={totalCount}
           />
           <TodosView
             error={error !== undefined}
             loading={loading}
-            todos={data.allTodos.todos}
+            todos={todos}
           />
         </div>
       );
