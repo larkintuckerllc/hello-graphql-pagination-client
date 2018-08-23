@@ -4,59 +4,48 @@ import Todos from './Todos';
 const FIRST = 3;
 
 interface IPaginationState {
-  offset: number;
-  totalCount: number;
+  after?: string;
+  endCursor?: string;
+  hasNextPage: boolean;
 }
 
 class Pagination extends React.Component<{}, IPaginationState> {
   public state: IPaginationState = {
-    offset: 0,
-    totalCount: 0,
+    hasNextPage: false,
   };
 
   public render() {
-    const { offset, totalCount } = this.state;
+    const { after, hasNextPage } = this.state;
     return (
       <div>
         <Todos
           first={FIRST}
-          offset={offset}
-          setTotalCount={this.setTotalCount}
+          after={after}
+          setPageInfo={this.setPageInfo}
         />
         <button
-          disabled={totalCount === 0 || offset === 0}
-          onClick={this.handlePrevious}
-        >Previous</button>
-        <button
-          disabled={totalCount === 0 || offset + FIRST >= totalCount}
+          disabled={!hasNextPage}
           onClick={this.handleNext}
         >Next</button>
       </div>
     );
   }
 
-  private handlePrevious = () => {
-    const { offset, totalCount } = this.state;
-    this.setState({
-      offset: offset - FIRST,
-      totalCount,
-    });
-  }
-
   private handleNext = () => {
-    const { offset, totalCount } = this.state;
+    const { endCursor } = this.state;
     this.setState({
-      offset: offset + FIRST,
-      totalCount,
+      after: endCursor,
+      hasNextPage: false
     });
   }
 
-  private setTotalCount = (totalCount: number) => {
-    const { offset } = this.state;
+  private setPageInfo = (hasNextPage: boolean, endCursor?: string) => {
+    const { after } = this.state;
     this.setState({
-      offset,
-      totalCount,
+      after,
+      endCursor,
+      hasNextPage,
     });
-  }
+  };
 }
 export default Pagination;
