@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 import * as React from 'react';
 import { Query } from 'react-apollo';
-import TodosCount from './TodosCount';
+import TodosPageInfo from './TodosPageInfo';
 import TodosView from './TodosView';
 
 export interface ITodo {
@@ -9,49 +9,79 @@ export interface ITodo {
   title: string;
 }
 
+interface IEdge {
+  node: ITodo;
+}
+
+interface IPageInfo {
+  endCursor?: string;
+  hasNextPage: boolean;
+}
+
 interface ITodosResult {
-  todos: ITodo[];
-  totalCount: number;
+  edges: IEdge[];
+  pageInfo: IPageInfo;
 }
 
 interface IData {
-  allTodos?: ITodosResult;
+  allTodosCursor?: ITodosResult;
 }
 
 interface ITodosProps {
+  after?: string;
   first: number;
-  offset: number;
-  setTotalCount(totalCount: number): void;
+  setPageInfo(hasNextPage: boolean, endCursor?: string): void;
 }
 
 const GET_TODOS = gql`
-  query TodosPage($first: Int, $offset: Int) {
-    allTodos(first: $first, offset: $offset) {
-      todos {
-        id
-        title
+  query TodosPage($after: String, $first: Int) {
+    allTodosCursor(after: $after, first: $first ) {
+      edges {
+        node {
+          id
+          title
+        }
       }
-      totalCount
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
     }
   }
 `;
 
 class TodosQuery extends Query<IData, {}> {}
 
-const Todos = ({ first, offset, setTotalCount }: ITodosProps) => (
+const Todos = ({ after, first, setPageInfo }: ITodosProps) => (
+  // HACK: NEED endCursor TO BE UNDEFINED
+  /* tslint:disable */
   <TodosQuery
     query={GET_TODOS}
     variables={{
+      after,
       first,
-      offset,
     }}
   >
-    {({ data: { allTodos: { todos = [], totalCount = 0 } = {} } = {}, error, loading }) => {
+    {({
+      data: {
+        allTodosCursor: {
+          edges = [],
+          pageInfo: {
+            endCursor = undefined,
+            hasNextPage = false
+          } = {}
+        } = {}
+      } = {},
+      error,
+      loading,
+    }) => {
+      const todos = edges.map(edge => edge.node);
       return (
         <div>
-          <TodosCount
-            setTotalCount={setTotalCount}
-            totalCount={totalCount}
+          <TodosPageInfo
+            endCursor={endCursor}
+            hasNextPage={hasNextPage}
+            setPageInfo={setPageInfo}
           />
           <TodosView
             error={error !== undefined}
@@ -63,6 +93,7 @@ const Todos = ({ first, offset, setTotalCount }: ITodosProps) => (
     }
   }
   </TodosQuery>
+  /* tslint:enable*/
 );
 
 export default Todos;
